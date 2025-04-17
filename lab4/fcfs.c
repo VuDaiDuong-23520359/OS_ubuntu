@@ -34,13 +34,17 @@ void PCB_AfterSort(PCB a[], int n){
     }
 }
 
-void FCFS (PCB p[], int n){
+void FCFS(PCB p[], int n, PCB ReadyQueue[], int *readyCount, PCB Terminated[], int *terminatedCount) {
     int currentTime = 0;
 
     for (int i = 0; i < n; i++) {
+        // Wait until process arrives
         if (currentTime < p[i].arr) {
-            currentTime = p[i].arr; // CPU is idle until the process arrives
+            currentTime = p[i].arr;
         }
+
+        ReadyQueue[*readyCount] = p[i];
+        (*readyCount)++;
 
         p[i].start = currentTime;
         p[i].finish = p[i].start + p[i].burst;
@@ -49,9 +53,14 @@ void FCFS (PCB p[], int n){
         p[i].wt = p[i].tat - p[i].burst;
         p[i].done = 1;
 
+        // Add to Terminated
+        Terminated[*terminatedCount] = p[i];
+        (*terminatedCount)++;
+
         currentTime = p[i].finish;
     }
 }
+
 
 void PCB_After(PCB a[], int n){
     printf("--------------------------------------------\nPID\tArrival Time\tBurst Time\tStart Time\tFinish Time\tWaiting Time\tResponse Time\tTurnaround Time\n");
@@ -61,7 +70,7 @@ void PCB_After(PCB a[], int n){
     printf("--------------------------------------------\n");
 }
 
-void Gantt_Chart(PCB p[], int n){
+void Gantt_Chart(PCB p[], int n) {
     int printed[MAX] = {0};
     int countPrinted = 0;
 
@@ -69,6 +78,7 @@ void Gantt_Chart(PCB p[], int n){
     char timelineLabel[MAX][10];
     int timelineLen = 0;
 
+    // Collect all process segments in order
     while (countPrinted < n) {
         int minStart = 1e9;
         int idx = -1;
@@ -89,45 +99,24 @@ void Gantt_Chart(PCB p[], int n){
         }
     }
 
-    // In hàng phân cách trên
-    printf("\nGantt Chart:\n");
+    // Print the Gantt chart in the requested format
+    printf("\nGantt Chart:\n|");
+    
+    // Print process labels
     for (int i = 0; i < timelineLen; i++) {
-        printf("+");
-        int width = timelineEnd[i] - timelineStart[i];
-        for (int j = 0; j < width * 2; j++) printf("-");
+        printf(" %s |", timelineLabel[i]);
     }
-    printf("+\n");
-
-    // In tên tiến trình
-    for (int i = 0; i < timelineLen; i++) {
-        printf("|");
-        int width = (timelineEnd[i] - timelineStart[i]) * 2;
-        int padding = (width - 2) / 2;
-        for (int j = 0; j < padding; j++) printf(" ");
-        printf("%s", timelineLabel[i]);
-        for (int j = 0; j < width - padding - 2; j++) printf(" ");
-    }
-    printf("|\n");
-
-    // In hàng phân cách dưới
-    for (int i = 0; i < timelineLen; i++) {
-        printf("+");
-        int width = timelineEnd[i] - timelineStart[i];
-        for (int j = 0; j < width * 2; j++) printf("-");
-    }
-    printf("+\n");
-
-    // In mốc thời gian
+    
+    // Print timeline
+    printf("\n");
     printf("%d", timelineStart[0]);
     for (int i = 0; i < timelineLen; i++) {
-        int width = (timelineEnd[i] - timelineStart[i]) * 2;
-        printf("%*s", width - snprintf(NULL, 0, "%d", timelineEnd[i]), ""); // Đệm khoảng trắng
-        printf("%d", timelineEnd[i]);
+        printf("    %d", timelineEnd[i]);
     }
     printf("\n");
 }
 
-void Print_AWT_ATAT (PCB p[], int n, float totalWT, float totalRT, float totalTAT){
+void Print_AT (PCB p[], int n, float totalWT, float totalRT, float totalTAT){
     for (int i = 0; i < n; i++) {
         totalWT += p[i].wt;
         totalRT += p[i].rt;
@@ -136,7 +125,7 @@ void Print_AWT_ATAT (PCB p[], int n, float totalWT, float totalRT, float totalTA
 
     printf("\nAverage Waiting Time: %.2f", totalWT / n);
     printf("\nAverage Response Time: %.2f", totalRT / n);
-    printf("Average Turnaround Time: %.2f\n", totalTAT / n);
+    printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
 }
 
 
@@ -151,14 +140,20 @@ int main (){
         Input(&p[i]);
     }
 
+    PCB ReadyQueue[MAX];
+    int readyCount = 0;
+
+    PCB Terminated[MAX];
+    int terminatedCount = 0;
+
 
     Sort(p, n);
     PCB_AfterSort(p, n);
 
-    FCFS(p, n);
+    FCFS(p, n, ReadyQueue, &readyCount, Terminated, &terminatedCount);
     PCB_After(p, n);
     Gantt_Chart(p, n);
-    Print_AWT_ATAT(p, n, 0, 0, 0);
+    Print_AT(p, n, 0, 0, 0);
 
     return 0;
 }
