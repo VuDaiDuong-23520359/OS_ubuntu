@@ -5,7 +5,7 @@
 typedef struct {
     int pid, arrival, burst;
     int start, finish;
-    int waiting, turnaround;
+    int waiting, response, turnaround;
     int done;  
 } PCB;
 
@@ -41,7 +41,8 @@ void SJF (PCB p[], int n){
             p[idx].start = currentTime;
             p[idx].finish = p[idx].start + p[idx].burst;
             p[idx].turnaround = p[idx].finish - p[idx].arrival;
-            p[idx].waiting = p[idx].start - p[idx].arrival;
+            p[idx].response = p[idx].start - p[idx].arrival;
+            p[idx].waiting = p[idx].turnaround - p[idx].burst;
             p[idx].done = 1;
             completed++;
             currentTime = p[idx].finish;
@@ -52,9 +53,9 @@ void SJF (PCB p[], int n){
 }
 
 void PCB_After(PCB a[], int n){
-    printf("--------------------------------------------\nPID\tArrival Time\tBurst Time\tStart Time\tFinish Time\tWaiting Time\tTurnaround Time\n");
+    printf("--------------------------------------------\nPID\tArrival Time\tBurst Time\tStart Time\tFinish Time\tWaiting Time\tResponse Time\tTurnaround Time\n");
     for (int i = 0; i < n; i++){
-        printf("%d\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", a[i]. pid, a[i].arrival, a[i].burst, a[i].start, a[i].finish, a[i].waiting, a[i].turnaround);
+        printf("%d\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", a[i]. pid, a[i].arrival, a[i].burst, a[i].start, a[i].finish, a[i].waiting, a[i].response, a[i].turnaround);
     }
     printf("--------------------------------------------\n");
 }
@@ -125,13 +126,15 @@ void Gantt_Chart(PCB p[], int n){
     printf("\n");
 }
 
-void Print_AWT_ATAT (PCB p[], int n, float totalWT, float totalTAT){
+void Print_AWT_ATAT (PCB p[], int n, float totalWT, float totalRT, float totalTAT){
     for (int i = 0; i < n; i++) {
         totalWT += p[i].waiting;
+        totalRT += p[i].response;
         totalTAT += p[i].turnaround;
     }
 
-    printf("\nAverage Waiting Time: %.2f\n", totalWT / n);
+    printf("\nAverage Waiting Time: %.2f", totalWT / n);
+    printf("\nAverage Response Time: %.2f", totalRT / n);
     printf("Average Turnaround Time: %.2f\n", totalTAT / n);
 }
 
@@ -159,8 +162,7 @@ int main() {
     PCB_After(p, n);
     Gantt_Chart(p, n);
 
-    float totalWT = 0, totalTAT = 0;
-    Print_AWT_ATAT(p, n, totalWT, totalTAT);
+    Print_AWT_ATAT(p, n, 0, 0, 0);
     
     return 0;
 }
