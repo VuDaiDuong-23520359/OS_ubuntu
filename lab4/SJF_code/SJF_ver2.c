@@ -16,8 +16,16 @@ typedef struct{
 void inputProcess(int n, PCB P[]) {
     for (int i = 0; i < n; i++)
     {
-        printf("Process ID, Arrival Time, Burst Time: ");
-        scanf("%d %d %d", &P[i].iPID, &P[i].iArrival, &P[i].iBurst);
+        P[i].iPID = i + 1;
+
+        //Random Arrival Time
+        P[i].iArrival = rand() % 21;    // [0, 20]
+
+        //Random Burst Time
+        P[i].iBurst = (rand() % 11) + 2;   // [2, 12]
+
+        printf("Process ID, Arrival Time, Burst Time: %d %d %d\n", P[i].iPID, P[i].iArrival, P[i].iBurst);
+
         P[i].iStart = 0;
         P[i].iFinish = 0;
         P[i].iWaiting = 0;
@@ -38,46 +46,13 @@ void printProcess(int n, PCB P[]){
 }
 
 void exportGanttChart (int n, PCB P[]){
-    int printed[MAX] = {0};
-    int countPrinted = 0;
-
-    int timelineStart[MAX], timelineEnd[MAX];
-    char timelineLabel[MAX][10];
-    int timelineLen = 0;
-
-    // Collect all process segments in order
-    while (countPrinted < n) {
-        int minStart = 1e9;
-        int idx = -1;
-        for (int i = 0; i < n; i++) {
-            if (!printed[i] && P[i].iStart < minStart) {
-                minStart = P[i].iStart;
-                idx = i;
-            }
-        }
-
-        if (idx != -1) {
-            timelineStart[timelineLen] = P[idx].iStart;
-            timelineEnd[timelineLen] = P[idx].iFinish;
-            sprintf(timelineLabel[timelineLen], "P%d", P[idx].iPID);
-            timelineLen++;
-            printed[idx] = 1;
-            countPrinted++;
-        }
-    }
-
     printf("\nGantt Chart:\n|");
-    
-    // Print process labels
-    for (int i = 0; i < timelineLen; i++) {
-        printf(" %s |", timelineLabel[i]);
+    for (int i = 0; i < n; i++) {
+        printf(" P%d |", P[i].iPID);
     }
-    
-    // Print timeline
-    printf("\n");
-    printf("%d", timelineStart[0]);
-    for (int i = 0; i < timelineLen; i++) {
-        printf("    %d", timelineEnd[i]);
+    printf("\n%d", P[0].iStart);
+    for (int i = 0; i < n; i++) {
+        printf("   %d", P[i].iFinish);
     }
     printf("\n");
 }
@@ -156,22 +131,10 @@ int main()
     scanf("%d", &iNumberOfProcess);
 
     int iRemain = iNumberOfProcess, iReady = 0, iTerminated = 0;
+    int currentTime = 0;
 
     inputProcess(iNumberOfProcess, Input);
     quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL);
-    pushProcess(&iReady, ReadyQueue, Input[0]);
-    removeProcess(&iRemain, 0, Input);
-
-    ReadyQueue[0].iStart = ReadyQueue[0].iArrival;
-    ReadyQueue[0].iFinish = ReadyQueue[0].iStart + ReadyQueue[0].iBurst;
-    ReadyQueue[0].iResponse = ReadyQueue[0].iStart - ReadyQueue[0].iArrival;
-    ReadyQueue[0].iWaiting = ReadyQueue[0].iResponse;
-    ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
-
-    printf("\nReady Queue: ");
-    printProcess(1, ReadyQueue);
-
-    int currentTime = 0;
 
     while (iTerminated < iNumberOfProcess)
     {
@@ -201,7 +164,7 @@ int main()
         removeProcess(&iReady, 0, ReadyQueue);
     }
 
-    printf("\n===== FCFS Scheduling =====\n");
+    printf("\n===== SJF Scheduling =====\n");
     exportGanttChart(iTerminated, TerminatedArray);
 
     quickSort(TerminatedArray, 0, iTerminated - 1, SORT_BY_PID);
