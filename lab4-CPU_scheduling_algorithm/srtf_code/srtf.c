@@ -3,8 +3,9 @@
 #include<time.h>
 #define SORT_BY_ARRIVAL 0
 #define SORT_BY_PID 1
-#define SORT_BY_BURST 215
+#define SORT_BY_BURST 2
 #define SORT_BY_START 3
+#define SORT_BY_REMAINING 4
 
 typedef struct
 {
@@ -15,22 +16,30 @@ typedef struct
 
 void inputProcess(int n, PCB P[]) {
     for (int i = 0; i < n; i++) {
-        P[i].iPID = i; 
-        P[i].iArrival = rand() % 20;
-        P[i].iBurst = rand() % 11 + 2; 
-        P[i].iResponse = -1;
-        P[i].iWaiting = 0;
-        P[i].iTaT = -1;
+        P[i].iPID = i + 1;
+        P[i].iArrival = rand() % 21;    // Random arrival time [0, 20]
+        P[i].iBurst = (rand() % 11) + 2; // Random burst time [2, 12]
         P[i].iRemainingBurst = P[i].iBurst;
+        printf("Process ID: %d, Arrival Time: %d, Burst Time: %d\n",
+            P[i].iPID, P[i].iArrival, P[i].iBurst);
+        P[i].iStart = -1;
+        P[i].iFinish = -1;
+        P[i].iWaiting = 0;
+        P[i].iResponse = -1;
+        P[i].iTaT = 0;
     }
 }
 
 void printProcess(int n, PCB P[]) {
     for (int i = 0; i < n; i++) {
-        printf("P%d: Arrival time: %d; Burst time: %d; Response time: %d; Waiting time: %d; Turnaround time: %d\n", 
-            P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iResponse, P[i].iWaiting, P[i].iTaT);
+        printf("PID: %d, Arrival: %d, Burst: %d, Start: %d, Finish: %d, Waiting: %d, Response: %d, TaT: %d\n",
+            P[i].iPID, P[i].iArrival, P[i].iBurst,
+            P[i].iStart, P[i].iFinish,
+            P[i].iWaiting, P[i].iResponse,
+            P[i].iTaT);
     }
-} 
+}
+
 void pushProcess(int *n, PCB P[], PCB Q) {
     P[*n] = Q;
     (*n)++;
@@ -50,56 +59,38 @@ int swapProcess(PCB *P, PCB *Q) {
     *Q = temp;
     return 1;
 } 
+
 int partition(PCB P[], int low, int high, int iCriteria) {
-    PCB pivot = P[(low + high) / 2];
-    int i = low, j = high;
-    if (iCriteria == SORT_BY_ARRIVAL) {
-        while (i <= j) {
-            while (pivot.iArrival > P[i].iArrival) i++;
-            while (pivot.iArrival < P[j].iArrival) j--;
-            if (i <= j) {
-                swapProcess(&P[i], &P[j]);
-                i++;
-                j--;
-            }
-        }
-    } else if (iCriteria == SORT_BY_BURST) {
-        while (i <= j) {
-            while (pivot.iRemainingBurst > P[i].iRemainingBurst) i++;
-            while (pivot.iRemainingBurst < P[j].iRemainingBurst) j--;
-            if (i <= j) {
-                swapProcess(&P[i], &P[j]);
-                i++;
-                j--;
-            }
-        }
-    } else if (iCriteria == SORT_BY_PID) {
-        while (i <= j) {
-            while (pivot.iPID > P[i].iPID) i++;
-            while (pivot.iPID < P[j].iPID) j--;
-            if (i <= j) {
-                swapProcess(&P[i], &P[j]);
-                i++;
-                j--;
-            }
+    PCB pivot = P[high];
+    int i = (low - 1);
+    for (int j = low; j < high; j++) {
+        if ((iCriteria == SORT_BY_ARRIVAL && P[j].iArrival <= pivot.iArrival) ||
+            (iCriteria == SORT_BY_PID && P[j].iPID <= pivot.iPID) ||
+            (iCriteria == SORT_BY_BURST && P[j].iBurst <= pivot.iBurst) ||
+            (iCriteria == SORT_BY_START && P[j].iStart <= pivot.iStart) ||
+            (iCriteria == SORT_BY_REMAINING && P[j].iRemainingBurst <= pivot.iRemainingBurst)) {
+            i++;
+            swapProcess(&P[i], &P[j]);
         }
     }
-    return i;
-} 
+    swapProcess(&P[i + 1], &P[high]);
+    return (i + 1);
+}
+
 void quickSort(PCB P[], int low, int high, int iCriteria) {
-    if (low >= high) {
-        return;
+    if (low < high) {
+        int pi = partition(P, low, high, iCriteria);
+        quickSort(P, low, pi - 1, iCriteria);
+        quickSort(P, pi + 1, high, iCriteria);
     }
-    int p = partition(P, low, high, iCriteria);
-    quickSort(P, low, p - 1, iCriteria);
-    quickSort(P, p, high, iCriteria);
-} 
+}
+
 void calculateART(int n, PCB P[]) {
     double sum = 0;
     for(int i = 0; i < n; i++) {
         sum += P[i].iResponse;
     }
-    printf("Average Response Time: %.2f\n", sum/n);
+    printf("\nAverage Response Time: %.2f\n", sum/n);
 }
 void calculateAWT(int n, PCB P[]) {
     double sum = 0;
@@ -116,68 +107,90 @@ void calculateATaT(int n, PCB P[]) {
     }
     printf("Average Turnaround Time: %.2f\n", sum/n);
 }
+
+void printGanttChart(int GanttProcess[], int GanttTime[], int ganttIndex) {
+    printf("\nGantt Chart:\n");
+    for (int i = 0; i < ganttIndex; i++) {
+        printf("| P%d ", GanttProcess[i]);
+    }
+    printf("|\n");
+    for (int i = 0; i <= ganttIndex; i++) {
+        printf("%d   ", GanttTime[i]);
+    }
+    printf("\n");
+}
+
 int main() {
     srand(time(NULL));
+
     PCB Input[10];
     PCB ReadyQueue[10];
     PCB FinishedArray[10];
+    int GanttProcess[100], GanttTime[100];
+    int ganttIndex = 0;
+
     int iNumberOfProcess;
-    int CurrentTime = 0;
-    int CurrentPID;
     printf("Please input number of Process: ");
     scanf("%d", &iNumberOfProcess);
-    int iRemain = iNumberOfProcess, iReady = 0, iFinish = 0;
-    inputProcess(iNumberOfProcess, Input);
-    printProcess(iRemain, Input);
-    quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL);
-    pushProcess(&iReady, ReadyQueue, Input[0]);
-    removeProcess(&iRemain, 0, Input);
-    CurrentPID = ReadyQueue[0].iPID;
-    CurrentTime = ReadyQueue[0].iArrival;
-    ReadyQueue[0].iStart = CurrentTime;
-    ReadyQueue[0].iWaiting = 0;
-    ReadyQueue[0].iResponse = 0;
-    ReadyQueue[0].iTaT = 0;
 
-    while (iReady > 0 || iRemain > 0) { //scheduling until no processes are in the input nor ready queue
-        CurrentTime++;
-        if (iReady > 0 && ReadyQueue[0].iArrival < CurrentTime) { //begin if the process has arrived
+    int iRemain = iNumberOfProcess, iReady = 0, iFinish = 0;
+    int CurrentTime = 0;
+
+    inputProcess(iNumberOfProcess, Input);
+    quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL);
+
+    while (iRemain > 0 || iReady > 0) {
+        // Move arrived processes into ReadyQueue
+        while (iRemain > 0 && Input[0].iArrival <= CurrentTime) {
+            pushProcess(&iReady, ReadyQueue, Input[0]);
+            removeProcess(&iRemain, 0, Input);
+        }
+
+        // If ReadyQueue not empty, process
+        if (iReady > 0) {
+            quickSort(ReadyQueue, 0, iReady - 1, SORT_BY_REMAINING);
+
+            // If this is a new process (or preemption), record in Gantt chart
+            if (ganttIndex == 0 || ReadyQueue[0].iPID != GanttProcess[ganttIndex - 1]) {
+                GanttProcess[ganttIndex] = ReadyQueue[0].iPID;
+                GanttTime[ganttIndex] = CurrentTime;
+                ganttIndex++;
+            }
+
+            // If first time running, set Start
+            if (ReadyQueue[0].iStart == -1) {
+                ReadyQueue[0].iStart = CurrentTime;
+                ReadyQueue[0].iResponse = CurrentTime - ReadyQueue[0].iArrival;
+            }
+
             ReadyQueue[0].iRemainingBurst--;
-            if (ReadyQueue[0].iRemainingBurst == 0) { //if the current process is done, remove from the ready queue
-                ReadyQueue[0].iFinish = CurrentTime;
-                ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival; 
+
+            // If finished
+            if (ReadyQueue[0].iRemainingBurst == 0) {
+                ReadyQueue[0].iFinish = CurrentTime + 1;
+                ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
                 ReadyQueue[0].iWaiting = ReadyQueue[0].iTaT - ReadyQueue[0].iBurst;
                 pushProcess(&iFinish, FinishedArray, ReadyQueue[0]);
                 removeProcess(&iReady, 0, ReadyQueue);
             }
+            CurrentTime++;
         }
-        while (iRemain > 0 && CurrentTime >= Input[0].iArrival) { //add all processes that have arrived
-            pushProcess(&iReady, ReadyQueue, Input[0]);
-            
-            ReadyQueue[iReady - 1].iWaiting = 0;
-            ReadyQueue[iReady - 1].iResponse = 0;
-            ReadyQueue[iReady - 1].iTaT = 0;
-            ReadyQueue[iReady - 1].iResponse = -1;
-
-            removeProcess(&iRemain, 0, Input);
-        }
-        if (iReady > 1) {
-            quickSort(ReadyQueue, 0, iReady - 1, SORT_BY_BURST);
-        }
-        if (iReady > 0 && CurrentPID != ReadyQueue[0].iPID) { //if a new process has shorter burst time, update response time and begin processing
-            if (ReadyQueue[0].iResponse == -1) {
-                ReadyQueue[0].iStart = CurrentTime;
-                ReadyQueue[0].iResponse = ReadyQueue[0].iStart - ReadyQueue[0].iArrival;
-            }
-            CurrentPID = ReadyQueue[0].iPID;
+        else { // No process ready, CPU idle
+            CurrentTime++;
         }
     }
-    
+
+    // Add final Gantt time
+    GanttTime[ganttIndex] = CurrentTime;
+
     printf("\n===== SRTF Scheduling =====\n");
-    printProcess(iFinish, FinishedArray);
     quickSort(FinishedArray, 0, iFinish - 1, SORT_BY_PID);
+    printProcess(iFinish, FinishedArray);
+
+    printGanttChart(GanttProcess, GanttTime, ganttIndex);
     calculateART(iFinish, FinishedArray);
     calculateAWT(iFinish, FinishedArray);
     calculateATaT(iFinish, FinishedArray);
+
     return 0;
 }
