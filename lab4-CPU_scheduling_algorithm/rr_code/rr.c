@@ -9,6 +9,13 @@
 #define SORT_BY_BURST 2
 #define SORT_BY_START 3
 #define SORT_BY_REMAINING 4
+#define MAX_GANTT_ENTRIES 100
+
+typedef struct {
+    int iPID;
+    int iStartTime;
+    int iEndTime;
+} GanttEntry;
 
 typedef struct {
     int iPID;
@@ -89,12 +96,34 @@ void calculateAverages(int n, PCB P[]) {
     printf("Average Turnaround Time: %.2f\n", avgTaT/n);
 }
 
+void printGanttChart(GanttEntry gantt[], int count) {
+    if (count == 0) return;
+    
+    printf("\nGantt Chart:\n");
+    printf("|");
+    for (int i = 0; i < count; i++) {
+        if (gantt[i].iPID == -1) {
+            printf(" IDLE |");
+        } else {
+            printf(" P%d |", gantt[i].iPID);
+        }
+    }
+    
+    printf("\n%d", gantt[0].iStartTime);
+    for (int i = 0; i < count; i++) {
+        printf("   %d", gantt[i].iEndTime);
+    }
+    printf("\n");
+}
+
 int main() {
     srand(time(NULL));
     
     PCB Input[MAX_PROCESSES];
     PCB ReadyQueue[MAX_PROCESSES];
     PCB FinishedArray[MAX_PROCESSES];
+    GanttEntry ganttChart[MAX_GANTT_ENTRIES];
+    int ganttIndex = 0;
     
     int n, quantum;
     printf("Enter number of processes: ");
@@ -109,6 +138,8 @@ int main() {
     int readyCount = 0, finishedCount = 0;
     int currentProcess = -1;
     int timeSlice = 0;
+    int lastPID = -1;
+    int lastStartTime = 0;
     
     // Initial population of ready queue
     for (int i = 0; i < n; i++) {
@@ -128,6 +159,14 @@ int main() {
         // If current process is done or time quantum expired
         if (currentProcess != -1 && 
             (ReadyQueue[currentProcess].iRemainingBurst == 0 || timeSlice >= quantum)) {
+            
+            // Record the completed execution segment
+            if (lastPID != -1) {
+                ganttChart[ganttIndex].iPID = lastPID;
+                ganttChart[ganttIndex].iStartTime = lastStartTime;
+                ganttChart[ganttIndex].iEndTime = time;
+                ganttIndex++;
+            }
             
             if (ReadyQueue[currentProcess].iRemainingBurst == 0) {
                 // Process completed
@@ -154,6 +193,7 @@ int main() {
             
             currentProcess = -1;
             timeSlice = 0;
+            lastPID = -1;
         }
         
         // Select next process if CPU is idle
@@ -167,6 +207,25 @@ int main() {
                 }
             }
             timeSlice = 0;
+            
+            // Start new Gantt entry
+            lastPID = ReadyQueue[currentProcess].iPID;
+            lastStartTime = time;
+        }
+        
+        // If CPU is idle but processes are coming later
+        if (currentProcess == -1 && readyCount == 0 && completed < n) {
+            if (lastPID != -1) {
+                ganttChart[ganttIndex].iPID = lastPID;
+                ganttChart[ganttIndex].iStartTime = lastStartTime;
+                ganttChart[ganttIndex].iEndTime = time;
+                ganttIndex++;
+                lastPID = -1;
+            }
+            // Add IDLE time to Gantt chart
+            ganttChart[ganttIndex].iPID = -1; // -1 represents IDLE
+            ganttChart[ganttIndex].iStartTime = time;
+            // IDLE will continue until next process arrives
         }
         
         // Execute current process
@@ -178,11 +237,18 @@ int main() {
         time++;
     }
     
+    // Add the last execution segment
+    if (lastPID != -1) {
+        ganttChart[ganttIndex].iPID = lastPID;
+        ganttChart[ganttIndex].iStartTime = lastStartTime;
+        ganttChart[ganttIndex].iEndTime = time;
+        ganttIndex++;
+    }
+    
     printf("\n===== Round Robin Scheduling =====\n");
-
     quickSort(FinishedArray, 0, finishedCount - 1, SORT_BY_PID);
     printProcess(finishedCount, FinishedArray);
-    
+    printGanttChart(ganttChart, ganttIndex);
     calculateAverages(finishedCount, FinishedArray);
     
     return 0;
