@@ -52,6 +52,19 @@ void printProcess(int n, PCB P[]) {
     }
 }
 
+void pushProcess(int *n, PCB P[], PCB Q) {
+    P[*n] = Q;
+    (*n)++;
+}
+
+void removeProcess(int *n, int index, PCB P[]){
+    for (int i = index; i < *n - 1; i++)
+    {
+        P[i] = P[i + 1];
+    }
+    (*n)--;
+}
+
 void swapProcess(PCB *a, PCB *b) {
     PCB temp = *a;
     *a = *b;
@@ -144,7 +157,7 @@ int main() {
     // Initial population of ready queue
     for (int i = 0; i < n; i++) {
         if (Input[i].iArrival <= time) {
-            ReadyQueue[readyCount++] = Input[i];
+            pushProcess(&readyCount, ReadyQueue, Input[i]);
         }
     }
     
@@ -152,7 +165,7 @@ int main() {
         // Add arriving processes to ready queue
         for (int i = 0; i < n; i++) {
             if (Input[i].iArrival == time) {
-                ReadyQueue[readyCount++] = Input[i];
+                pushProcess(&readyCount, ReadyQueue, Input[i]);
             }
         }
         
@@ -178,16 +191,11 @@ int main() {
                 completed++;
                 
                 // Remove from ready queue
-                for (int i = currentProcess; i < readyCount-1; i++) {
-                    ReadyQueue[i] = ReadyQueue[i+1];
-                }
-                readyCount--;
+                removeProcess(&readyCount, currentProcess, ReadyQueue);
             } else {
                 // Time quantum expired, move to end of queue
                 PCB temp = ReadyQueue[currentProcess];
-                for (int i = currentProcess; i < readyCount-1; i++) {
-                    ReadyQueue[i] = ReadyQueue[i+1];
-                }
+                removeProcess(&readyCount, currentProcess, ReadyQueue);
                 ReadyQueue[readyCount-1] = temp;
             }
             
