@@ -57,9 +57,8 @@ void pushProcess(int *n, PCB P[], PCB Q) {
     (*n)++;
 }
 
-void removeProcess(int *n, int index, PCB P[]){
-    for (int i = index; i < *n - 1; i++)
-    {
+void removeProcess(int *n, int index, PCB P[]) {
+    for (int i = index; i < *n - 1; i++) {
         P[i] = P[i + 1];
     }
     (*n)--;
@@ -95,7 +94,6 @@ void quickSort(PCB P[], int low, int high, int iCriteria) {
         quickSort(P, pi + 1, high, iCriteria);
     }
 }
-
 
 void calculateAverages(int n, PCB P[]) {
     float avgRT = 0, avgWT = 0, avgTaT = 0;
@@ -144,6 +142,11 @@ int main() {
     printf("Enter time quantum: ");
     scanf("%d", &quantum);
     
+    if (n <= 0 || n > MAX_PROCESSES) {
+        printf("Invalid number of processes. Must be between 1 and %d\n", MAX_PROCESSES);
+        return 1;
+    }
+    
     inputProcess(n, Input);
     quickSort(Input, 0, n - 1, SORT_BY_ARRIVAL);
     
@@ -154,13 +157,6 @@ int main() {
     int lastPID = -1;
     int lastStartTime = 0;
     
-    // Initial population of ready queue
-    for (int i = 0; i < n; i++) {
-        if (Input[i].iArrival <= time) {
-            pushProcess(&readyCount, ReadyQueue, Input[i]);
-        }
-    }
-    
     while (completed < n) {
         // Add arriving processes to ready queue
         for (int i = 0; i < n; i++) {
@@ -169,42 +165,50 @@ int main() {
             }
         }
         
-        // If current process is done or time quantum expired
-        if (currentProcess != -1 && 
-            (ReadyQueue[currentProcess].iRemainingBurst == 0 || timeSlice >= quantum)) {
-            
-            // Record the completed execution segment
-            if (lastPID != -1) {
-                ganttChart[ganttIndex].iPID = lastPID;
-                ganttChart[ganttIndex].iStartTime = lastStartTime;
-                ganttChart[ganttIndex].iEndTime = time;
-                ganttIndex++;
-            }
-            
+        // Check if current process is done or time quantum expired
+        if (currentProcess != -1) {
             if (ReadyQueue[currentProcess].iRemainingBurst == 0) {
                 // Process completed
                 ReadyQueue[currentProcess].iFinish = time;
                 ReadyQueue[currentProcess].iTaT = time - ReadyQueue[currentProcess].iArrival;
                 ReadyQueue[currentProcess].iWaiting = ReadyQueue[currentProcess].iTaT - ReadyQueue[currentProcess].iBurst;
                 
+                // Record the completed execution segment
+                if (lastPID != -1) {
+                    ganttChart[ganttIndex].iPID = lastPID;
+                    ganttChart[ganttIndex].iStartTime = lastStartTime;
+                    ganttChart[ganttIndex].iEndTime = time;
+                    ganttIndex++;
+                    lastPID = -1;
+                }
+                
                 FinishedArray[finishedCount++] = ReadyQueue[currentProcess];
                 completed++;
                 
                 // Remove from ready queue
                 removeProcess(&readyCount, currentProcess, ReadyQueue);
-            } else {
+                currentProcess = -1;
+                timeSlice = 0;
+            }
+            else if (timeSlice >= quantum) {
                 // Time quantum expired, move to end of queue
+                if (lastPID != -1) {
+                    ganttChart[ganttIndex].iPID = lastPID;
+                    ganttChart[ganttIndex].iStartTime = lastStartTime;
+                    ganttChart[ganttIndex].iEndTime = time;
+                    ganttIndex++;
+                    lastPID = -1;
+                }
+                
                 PCB temp = ReadyQueue[currentProcess];
                 removeProcess(&readyCount, currentProcess, ReadyQueue);
-                ReadyQueue[readyCount-1] = temp;
+                pushProcess(&readyCount, ReadyQueue, temp);
+                currentProcess = -1;
+                timeSlice = 0;
             }
-            
-            currentProcess = -1;
-            timeSlice = 0;
-            lastPID = -1;
         }
         
-        // Select next process if CPU is idle
+        // Select next process if CPU is idle and there are processes in ready queue
         if (currentProcess == -1 && readyCount > 0) {
             currentProcess = 0;
             if (!ReadyQueue[currentProcess].bResponseRecorded) {
@@ -230,10 +234,17 @@ int main() {
                 ganttIndex++;
                 lastPID = -1;
             }
-            // Add IDLE time to Gantt chart
-            ganttChart[ganttIndex].iPID = -1; // -1 represents IDLE
-            ganttChart[ganttIndex].iStartTime = time;
-            // IDLE will continue until next process arrives
+            
+            // Add IDLE time to Gantt chart if not already in IDLE state
+            if (ganttIndex == 0 || ganttChart[ganttIndex-1].iPID != -1) {
+                ganttChart[ganttIndex].iPID = -1; // -1 represents IDLE
+                ganttChart[ganttIndex].iStartTime = time;
+                ganttChart[ganttIndex].iEndTime = time + 1; // Will be updated next iteration
+                ganttIndex++;
+            } else {
+                // Extend the existing IDLE period
+                ganttChart[ganttIndex-1].iEndTime = time + 1;
+            }
         }
         
         // Execute current process
@@ -245,7 +256,7 @@ int main() {
         time++;
     }
     
-    // Add the last execution segment
+    // Add the last execution segment if needed
     if (lastPID != -1) {
         ganttChart[ganttIndex].iPID = lastPID;
         ganttChart[ganttIndex].iStartTime = lastStartTime;
