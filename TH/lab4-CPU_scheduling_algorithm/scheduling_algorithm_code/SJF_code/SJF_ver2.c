@@ -18,15 +18,9 @@ void inputProcess(int n, PCB P[]) {
     for (int i = 0; i < n; i++)
     {
         P[i].iPID = i + 1;
-
-        //Random Arrival Time
         P[i].iArrival = rand() % 21;    // [0, 20]
-
-        //Random Burst Time
         P[i].iBurst = (rand() % 11) + 2;   // [2, 12]
-
-        printf("Process ID, Arrival Time, Burst Time: %d %d %d\n", P[i].iPID, P[i].iArrival, P[i].iBurst);
-
+        printf("Process ID: %d, Arrival Time: %d, Burst Time:  %d\n", P[i].iPID, P[i].iArrival, P[i].iBurst);
         P[i].iStart = 0;
         P[i].iFinish = 0;
         P[i].iWaiting = 0;
@@ -38,7 +32,7 @@ void inputProcess(int n, PCB P[]) {
 void printProcess(int n, PCB P[]){
     for (int i = 0; i < n; i++)
     {
-        printf("PID: %d, Arrival: %d, Burst: %d, Start: %d, Finish: %d, Waiting: %d, Response: %d, TaT: %d\n",
+        printf("PID: %d, Arrival: %d, Burst: %d, Start: %d, Finish: %d, Waiting: %d, Response: %d, Turn-around Time: %d\n",
             P[i].iPID, P[i].iArrival, P[i].iBurst,
             P[i].iStart, P[i].iFinish,
             P[i].iWaiting, P[i].iResponse,
@@ -109,7 +103,7 @@ void calculateAWT(int n, PCB P[]) {
     {
         totalWT += P[i].iWaiting;
     }
-    printf("\nAWT: %.2f", totalWT / n);
+    printf("\nAverage Waiting Time: %.2f", totalWT / n);
 }
 
 void calculateATaT(int n, PCB P[]) {
@@ -118,7 +112,7 @@ void calculateATaT(int n, PCB P[]) {
     {
         totalTaT += P[i].iTaT;
     }
-    printf("\nATaT: %.2f\n", totalTaT / n);
+    printf("\nAverage Turn-around Time: %.2f\n", totalTaT / n);
 }
 
 int main()
@@ -172,15 +166,11 @@ int main()
     }
 
     printf("\n===== SJF Scheduling =====\n");
-
     PCB temp[10];
     memcpy(temp, TerminatedArray, sizeof(TerminatedArray));
-
     quickSort(TerminatedArray, 0, iTerminated - 1, SORT_BY_PID);
     printProcess(iTerminated, TerminatedArray);
-
     exportGanttChart(iTerminated, temp);
-
     calculateAWT(iTerminated, TerminatedArray);
     calculateATaT(iTerminated, TerminatedArray);
 
