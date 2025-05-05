@@ -11,13 +11,13 @@
 #define SORT_BY_REMAINING 4
 #define MAX_GANTT_ENTRIES 100
 
-typedef struct {
+typedef struct{
     int iPID;
     int iStartTime;
     int iEndTime;
 } GanttEntry;
 
-typedef struct {
+typedef struct{
     int iPID;
     int iArrival, iBurst;
     int iRemainingBurst;
@@ -26,14 +26,13 @@ typedef struct {
     bool bResponseRecorded;
 } PCB;
 
-void inputProcess(int n, PCB P[]) {
-    for (int i = 0; i < n; i++) {
+void inputProcess(int n, PCB P[]){
+    for (int i = 0; i < n; i++){
         P[i].iPID = i + 1;
         P[i].iArrival = rand() % 21;    // [0, 20]
         P[i].iBurst = (rand() % 11) + 2;   // [2, 12]
         P[i].iRemainingBurst = P[i].iBurst;
-        printf("Process ID: %d, Arrival: %d, Burst: %d\n", 
-               P[i].iPID, P[i].iArrival, P[i].iBurst);
+        printf("Process ID: %d, Arrival: %d, Burst: %d\n", P[i].iPID, P[i].iArrival, P[i].iBurst);
         P[i].iStart = -1;
         P[i].iFinish = -1;
         P[i].iWaiting = 0;
@@ -43,37 +42,37 @@ void inputProcess(int n, PCB P[]) {
     }
 }
 
-void printProcess(int n, PCB P[]) {
-    for (int i = 0; i < n; i++) {
-        printf("P%d: Arrival: %d, Burst: %d, Start: %d, Finish: %d, Response: %d, Waiting: %d, TaT: %d\n", 
+void printProcess(int n, PCB P[]){
+    for (int i = 0; i < n; i++){
+        printf("P%d: Arrival: %d, Burst: %d, Start: %d, Finish: %d, Response: %d, Waiting: %d, Turn-around Time: %d\n", 
             P[i].iPID, P[i].iArrival, P[i].iBurst, 
             P[i].iStart, P[i].iFinish,
             P[i].iResponse, P[i].iWaiting, P[i].iTaT);
     }
 }
 
-void pushProcess(int *n, PCB P[], PCB Q) {
+void pushProcess(int *n, PCB P[], PCB Q){
     P[*n] = Q;
     (*n)++;
 }
 
-void removeProcess(int *n, int index, PCB P[]) {
-    for (int i = index; i < *n - 1; i++) {
+void removeProcess(int *n, int index, PCB P[]){
+    for (int i = index; i < *n - 1; i++){
         P[i] = P[i + 1];
     }
     (*n)--;
 }
 
-void swapProcess(PCB *a, PCB *b) {
+void swapProcess(PCB *a, PCB *b){
     PCB temp = *a;
     *a = *b;
     *b = temp;
 }
 
-int partition(PCB P[], int low, int high, int iCriteria) {
+int partition(PCB P[], int low, int high, int iCriteria){
     PCB pivot = P[high];
     int i = (low - 1);
-    for (int j = low; j < high; j++) {
+    for (int j = low; j < high; j++){
         if ((iCriteria == SORT_BY_ARRIVAL && P[j].iArrival <= pivot.iArrival) ||
             (iCriteria == SORT_BY_PID && P[j].iPID <= pivot.iPID) ||
             (iCriteria == SORT_BY_BURST && P[j].iBurst <= pivot.iBurst) ||
@@ -87,17 +86,17 @@ int partition(PCB P[], int low, int high, int iCriteria) {
     return (i + 1);
 }
 
-void quickSort(PCB P[], int low, int high, int iCriteria) {
-    if (low < high) {
+void quickSort(PCB P[], int low, int high, int iCriteria){
+    if (low < high){
         int pi = partition(P, low, high, iCriteria);
         quickSort(P, low, pi - 1, iCriteria);
         quickSort(P, pi + 1, high, iCriteria);
     }
 }
 
-void calculateAverages(int n, PCB P[]) {
+void calculateAverages(int n, PCB P[]){
     float avgRT = 0, avgWT = 0, avgTaT = 0;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++){
         avgRT += P[i].iResponse;
         avgWT += P[i].iWaiting;
         avgTaT += P[i].iTaT;
@@ -107,21 +106,19 @@ void calculateAverages(int n, PCB P[]) {
     printf("Average Turnaround Time: %.2f\n", avgTaT/n);
 }
 
-void printGanttChart(GanttEntry gantt[], int count) {
+void printGanttChart(GanttEntry gantt[], int count){
     if (count == 0) return;
-    
     printf("\nGantt Chart:\n");
     printf("|");
-    for (int i = 0; i < count; i++) {
-        if (gantt[i].iPID == -1) {
+    for (int i = 0; i < count; i++){
+        if (gantt[i].iPID == -1){
             printf(" IDLE |");
-        } else {
+        } else{
             printf(" P%d |", gantt[i].iPID);
         }
     }
-    
     printf("\n%d", gantt[0].iStartTime);
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++){
         printf("   %d", gantt[i].iEndTime);
     }
     printf("\n");
@@ -142,7 +139,7 @@ int main() {
     printf("Enter time quantum: ");
     scanf("%d", &quantum);
     
-    if (n <= 0 || n > MAX_PROCESSES) {
+    if (n <= 0 || n > MAX_PROCESSES){
         printf("Invalid number of processes. Must be between 1 and %d\n", MAX_PROCESSES);
         return 1;
     }
@@ -157,7 +154,7 @@ int main() {
     int lastPID = -1;
     int lastStartTime = 0;
     
-    while (completed < n) {
+    while (completed < n){
         // Add arriving processes to ready queue
         for (int i = 0; i < n; i++) {
             if (Input[i].iArrival == time) {
