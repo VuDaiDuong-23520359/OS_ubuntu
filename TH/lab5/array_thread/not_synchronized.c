@@ -19,7 +19,7 @@ void* producer(void* arg) {
             printf("[Producer] Array full. Skipping...\n");
         }
 
-        sleep(1);
+        usleep(100);
     }
     return NULL;
 }
@@ -36,7 +36,7 @@ void* consumer(void* arg) {
             printf("[Consumer] Nothing in array a\n");
         }
 
-        sleep(2);
+        usleep(100);
     }
     return NULL;
 }

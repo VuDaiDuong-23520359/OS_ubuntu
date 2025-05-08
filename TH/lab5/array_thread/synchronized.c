@@ -15,7 +15,7 @@ void* producer(void* arg) {
     while (1) {
         int num = rand() % 100;
 
-        sem_wait(&mutex);  // Lock mảng a
+        sem_wait(&mutex);  
 
         if (size < MAX_SIZE) {
             a[size++] = num;
@@ -24,9 +24,9 @@ void* producer(void* arg) {
             printf("[Producer] Array full. Skipping...\n");
         }
 
-        sem_post(&mutex);  // Unlock mảng a
+        sem_post(&mutex);  
 
-        sleep(1);  // Đợi để dễ quan sát
+        usleep(100);  
     }
     return NULL;
 }
@@ -47,7 +47,7 @@ void* consumer(void* arg) {
 
         sem_post(&mutex);  // Unlock mảng a
 
-        sleep(2);  // Đợi lâu hơn producer
+        usleep(100); 
     }
     return NULL;
 }
