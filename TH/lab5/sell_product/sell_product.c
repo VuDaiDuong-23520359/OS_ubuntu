@@ -26,7 +26,7 @@ void* producer(void* arg) {
         printf("[Producer] Produced: %d, Sold: %d\n", p, s);
 
         sem_post(&sem_product); // báo cho seller là có hàng
-        sleep(3);
+        sleep(2);
     }
     return NULL;
 }
@@ -43,7 +43,7 @@ void* seller(void* arg) {
         printf("[Seller]   Produced: %d, Sold: %d\n", p, s);
 
         sem_post(&sem_space); // báo cho producer là có thêm chỗ trống
-        sleep(2);
+        sleep(4);
     }
     return NULL;
 }
