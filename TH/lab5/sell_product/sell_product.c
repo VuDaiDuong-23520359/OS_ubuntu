@@ -4,7 +4,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 
-#define MAX_BUFFER 360
+#define MAX_BUFFER 359
 
 int products = 0;
 int sells = 0;
@@ -53,7 +53,7 @@ int main() {
 
     // Khởi tạo semaphore
     sem_init(&sem_product, 0, 0);         // Ban đầu chưa có sản phẩm
-    sem_init(&sem_space, 0, MAX_BUFFER);  // Tối đa 360 sản phẩm (products - sells <= 359)
+    sem_init(&sem_space, 0, MAX_BUFFER);  // Tối đa 359 sản phẩm (products - sells <= 359)
 
     pthread_create(&t1, NULL, producer, NULL);
     pthread_create(&t2, NULL, seller, NULL);
@@ -61,7 +61,8 @@ int main() {
     pthread_join(t1, NULL);
     pthread_join(t2, NULL);
 
-    // Cleanup (thực tế có thể không tới đây)
+    // Giải phóng tài nguyên
+    pthread_mutex_destroy(&lock);
     sem_destroy(&sem_product);
     sem_destroy(&sem_space);
 
