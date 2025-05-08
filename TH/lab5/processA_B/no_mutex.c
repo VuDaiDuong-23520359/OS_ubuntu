@@ -10,7 +10,7 @@ void* processA(void* arg) {
         if (x == 20)
             x = 0;
         printf("A: x = %d\n", x);
-        sleep(2);
+        usleep(80);
     }
     return NULL;
 }
@@ -21,7 +21,7 @@ void* processB(void* arg) {
         if (x == 20)
             x = 0;
         printf("B: x = %d\n", x);
-        sleep(2);
+        usleep(100);
     }
     return NULL;
 }

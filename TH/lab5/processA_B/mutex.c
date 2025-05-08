@@ -15,7 +15,7 @@ void* processA(void* arg) {
         printf("A: x = %d\n", x);
 
         pthread_mutex_unlock(&lock);
-        sleep(2);
+        usleep(80);
     }
     return NULL;
 }
@@ -30,7 +30,7 @@ void* processB(void* arg) {
         printf("B: x = %d\n", x);
 
         pthread_mutex_unlock(&lock);
-        sleep(2);
+        usleep(100);
     }
     return NULL;
 }
