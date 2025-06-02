@@ -1,0 +1,68 @@
+# File tạm khi biên dịch C
+*.d
+
+# File object
+*.o
+*.obj
+*.ko
+*.elf
+
+# File liên kết
+*.ilk
+*.map
+*.exp
+
+# Thư viện đã biên dịch
+*.a
+*.la
+*.lo
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# File thực thi
+*.exe
+*.out
+*.app
+*.hex
+*.i*86
+*.x86_64
+
+# File debug
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kết quả biên dịch Kernel Module
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# Thư mục build thông thường
+/build/
+bin/
+debug/
+release/
+
+# File tạm của CMake và Makefile
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
